@@ -1,0 +1,77 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Coded by: MLA
+'Project Start Date: 12/28/2010
+'Hooks:
+'  28530
+'Notes:
+'  GKD
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+F.Intrinsic.Control.CallSub(Save)
+
+Program.Sub.Main.End
+
+Program.Sub.Save.Start
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sOrdNo.Declare(String)
+
+F.Intrinsic.Control.SetErrorHandler("Save_Err")
+F.Intrinsic.Control.ClearErrors
+
+F.Intrinsic.Control.If(V.Passed.000110,=,"Y")
+	F.Intrinsic.UI.Inputbox("Please enter country of origin.","CoO","",V.Local.sRet)
+	F.Intrinsic.Control.If(V.Local.sRet,<>,"")
+		F.Intrinsic.String.Concat(V.Passed.FIRST-ORDER,"-",V.Passed.FIRST-SEQ,V.Local.sOrdNo)
+		F.Intrinsic.String.Concat("Select * from ATG_3588_CNTR_ORIGIN where ORDER_NO_SUFF = '",V.Local.sOrdNo,"'",V.Local.sSql)
+		F.ODBC.Connection!con.OpenRecordsetRW("rst",V.Local.sSql)
+		F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,"True")
+			F.ODBC.con!rst.AddNew
+			F.ODBC.con!rst.Set!ORDER_NO_SUFF(V.Local.sOrdNo)
+			F.ODBC.con!rst.Set!ORDER_NO(V.Passed.FIRST-ORDER)
+			F.Intrinsic.String.LPad(V.Passed.000168,"0",7,V.Local.sOrdNo)
+			F.ODBC.con!rst.Set!PACK_NO(V.Local.sOrdNo)
+			F.ODBC.con!rst.Set!COUNTRY(V.Local.sRet)
+			F.ODBC.con!rst.Update
+		F.Intrinsic.Control.Else
+			F.Intrinsic.String.Concat("Delete ATG_3588_CNTR_ORIGIN where ORDER_NO_SUFF = '",V.Passed.FIRST-ORDER,"'",V.Local.sSql)
+			F.ODBC.Connection!con.Execute(V.Local.sSql)
+			F.ODBC.con!rst.AddNew
+			F.ODBC.con!rst.Set!ORDER_NO_SUFF(V.Local.sOrdNo)
+			F.ODBC.con!rst.Set!ORDER_NO(V.Passed.FIRST-ORDER)
+			F.Intrinsic.String.LPad(V.Passed.000168,"0",7,V.Local.sOrdNo)
+			F.ODBC.con!rst.Set!PACK_NO(V.Local.sOrdNo)
+			F.ODBC.con!rst.Set!COUNTRY(V.Local.sRet)
+			F.ODBC.con!rst.Update
+		F.Intrinsic.Control.EndIf
+		F.ODBC.con!rst.Close
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.CallSub(Unload)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Save_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Save.End
+
+Program.Sub.Unload.Start
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+
